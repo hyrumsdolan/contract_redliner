@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Contract Redliner</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto&display=swap" rel="stylesheet">
+  <style>
+    body { font-family: 'Roboto', sans-serif; margin: 2rem; }
+    #dropzone {
+      border: 2px dashed #ccc;
+      border-radius: 4px;
+      padding: 2rem;
+      text-align: center;
+      color: #666;
+    }
+  </style>
+</head>
+<body>
+  <h1>Contract Redliner</h1>
+  <div id="dropzone">Drag and drop a client contract here</div>
+  <br />
+  <md-filled-button id="compareBtn">Compare with Knowledge Base</md-filled-button>
+  <pre id="result"></pre>
+  <script type="module">
+    import 'https://unpkg.com/@material/web@1.0.0-rc.0/all.js?module';
+    const dropzone = document.getElementById('dropzone');
+    let uploadedFile;
+    dropzone.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      dropzone.style.background = '#f5f5f5';
+    });
+    dropzone.addEventListener('dragleave', () => {
+      dropzone.style.background = 'transparent';
+    });
+    dropzone.addEventListener('drop', async (e) => {
+      e.preventDefault();
+      dropzone.style.background = 'transparent';
+      const file = e.dataTransfer.files[0];
+      if (file) {
+        const formData = new FormData();
+        formData.append('contract', file);
+        const res = await fetch('/api/upload', { method: 'POST', body: formData });
+        const data = await res.json();
+        uploadedFile = data.file;
+        dropzone.textContent = `Uploaded: ${file.name}`;
+      }
+    });
+
+    document.getElementById('compareBtn').addEventListener('click', async () => {
+      if (!uploadedFile) {
+        alert('Please upload a client contract first');
+        return;
+      }
+      const res = await fetch('/api/compare', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ uploadedFileName: uploadedFile })
+      });
+      const data = await res.json();
+      document.getElementById('result').textContent = data.result;
+    });
+  </script>
+</body>
+</html>
